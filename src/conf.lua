@@ -1,8 +1,8 @@
 function love.conf(t)
     t.window.title = "Fruity Maze: Arcade Edition"
-    t.window.width = 1024
-    t.window.height = 768
-    t.window.resizable = true
+    t.window.width = 512
+    t.window.height = 480
+    t.window.resizable = false
     t.modules.physics = false
 
     if arg[#arg] == "-debug" then
