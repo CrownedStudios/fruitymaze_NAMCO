@@ -107,7 +107,7 @@ end
 
 function Collectibles.draw()
     for _, item in ipairs(Collectibles.items) do
-        item:draw() -- Call the individual object's draw function directly!
+        item:draw()
     end
     love.graphics.setColor(1, 1, 1)
 end

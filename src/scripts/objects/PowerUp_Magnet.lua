@@ -9,6 +9,8 @@ PowerUp_Magnet.__index = PowerUp_Magnet
 
 local Maze = require("scripts.components.Maze")
 
+local Player = require("scripts.objects.player")
+
 -- Global Functions
 
 function PowerUp_Magnet.new(gridX, gridY, tileSize)
@@ -37,7 +39,7 @@ function PowerUp_Magnet:draw()
 end
 
 function PowerUp_Magnet:collected()
-    print("Magnet collected")
+    Player.AddMagnet()
 end
 
 return PowerUp_Magnet

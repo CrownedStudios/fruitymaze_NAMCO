@@ -9,6 +9,8 @@ PowerUp_Ghost.__index = PowerUp_Ghost
 
 local Maze = require("scripts.components.Maze")
 
+local Player = require("scripts.objects.player")
+
 -- Global Functions
 
 function PowerUp_Ghost.new(gridX, gridY, tileSize)
@@ -37,7 +39,7 @@ function PowerUp_Ghost:draw()
 end
 
 function PowerUp_Ghost:collected()
-    print("PowerUp_Ghost collected")
+    Player.AddGhost()
 end
 
 return PowerUp_Ghost

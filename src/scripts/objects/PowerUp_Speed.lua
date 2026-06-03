@@ -16,6 +16,8 @@ PowerUp_Speed.__index = PowerUp_Speed
 
 local Maze = require("scripts.components.Maze")
 
+local Player = require("scripts.objects.player")
+
 local SpriteAnimator = require("scripts.util.SpriteAnimator")
 
 -- Global Functions
@@ -56,7 +58,7 @@ function PowerUp_Speed:draw()
 end
 
 function PowerUp_Speed:collected()
-    print("PowerUp_Speed collected")
+    Player.AddSpeed()
 end
 
 return PowerUp_Speed

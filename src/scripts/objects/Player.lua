@@ -1,5 +1,69 @@
 local Player = {
     animations = {},
+    sprites = {
+        ["Normal"] = {
+            ["Up"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/up_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk/up_2.png"),
+            },
+            ["Down"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/down_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk/down_2.png"),
+            },
+            ["Left"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/left_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk/left_2.png"),
+            },
+            ["Right"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/right_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk/right_2.png"),
+            },
+
+            ["UpRight"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/upright_1.png"),
+            },
+            ["UpLeft"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/upleft_1.png"),
+            },
+            ["DownRight"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/downright_1.png"),
+            },
+            ["DownLeft"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk/downleft_1.png"),
+            },
+        },
+        ["Scared"] = {
+            ["Up"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/up_scared_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/up_scared_2.png"),
+            },
+            ["Down"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/down_scared_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/down_scared_2.png"),
+            },
+            ["Left"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/left_scared_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/left_scared_2.png"),
+            },
+            ["Right"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/right_scared_1.png"),
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/right_scared_2.png"),
+            },
+
+            ["UpRight"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/upright_scared_1.png"),
+            },
+            ["UpLeft"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/upleft_scared_1.png"),
+            },
+            ["DownRight"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/downright_scared_1.png"),
+            },
+            ["DownLeft"] = {
+                love.graphics.newImage("assets/sprites/characters/player/walk scared/downleft_scared_1.png"),
+            },
+        }
+    },
 
     gridX = 2,
     gridY = 2,
@@ -7,9 +71,17 @@ local Player = {
     currentDir = "right",
     intendedDir = "right",
 
-    moveSpeed = 90, -- pixels per second
+    moveSpeed_Normal = 90, -- pixels per second
+    moveSpeed_Speed = 280, -- pixels per second
 
-    isGhostMode = false,
+    hasSpeed = false,
+    hasMagnet = false,
+    hasGhost = false,
+
+    setSpeedTimer = 30,
+    setMagnetTimer = 35,
+    setGhostTimer = 20,
+
     hasMoved = false,
 }
 
@@ -22,44 +94,28 @@ local SpriteAnimator = require("scripts.util.SpriteAnimator")
 -- Global Functions
 
 function Player.load()
+    Player.moveSpeed = Player.moveSpeed_Normal
+
     Player.visualX = (Player.gridX - 1) * Maze.TILE_SIZE
     Player.visualY = (Player.gridY - 1) * Maze.TILE_SIZE
 
-    local framesLeft = {
-        love.graphics.newImage("assets/sprites/characters/player/walk/left_1.png"),
-        love.graphics.newImage("assets/sprites/characters/player/walk/left_2.png")
-    }
+    Player.speedTimer = Player.setSpeedTimer
+    Player.magnetTimer = Player.setMagnetTimer
+    Player.ghostTimer = Player.setGhostTimer
 
-    local framesRight = {
-        love.graphics.newImage("assets/sprites/characters/player/walk/right_1.png"),
-        love.graphics.newImage("assets/sprites/characters/player/walk/right_2.png")
-    }
-    local framesUpRight = {
-        love.graphics.newImage("assets/sprites/characters/player/walk/upright_1.png"),
-    }
+    Player.animations["up"] = SpriteAnimator.new(Player.sprites["Normal"]["Up"], 0.15)
+    Player.animations["down"] = SpriteAnimator.new(Player.sprites["Normal"]["Down"], 0.15)
+    Player.animations["left"] = SpriteAnimator.new(Player.sprites["Normal"]["Left"], 0.15)
+    Player.animations["right"] = SpriteAnimator.new(Player.sprites["Normal"]["Right"], 0.15)
 
-    local framesUpLeft = {
-        love.graphics.newImage("assets/sprites/characters/player/walk/upleft_1.png"),
-    }
-
-    local framesDownRight = {
-        love.graphics.newImage("assets/sprites/characters/player/walk/downright_1.png"),
-    }
-
-    local framesDownLeft = {
-        love.graphics.newImage("assets/sprites/characters/player/walk/downleft_1.png"),
-    }
-
-    Player.animations["left"] = SpriteAnimator.new(framesLeft, 0.15)
-    Player.animations["right"] = SpriteAnimator.new(framesRight, 0.15)
-    Player.animations["upright"] = SpriteAnimator.new(framesUpRight, 0.15)
-    Player.animations["upleft"] = SpriteAnimator.new(framesUpLeft, 0.15)
-    Player.animations["downright"] = SpriteAnimator.new(framesDownRight, 0.15)
-    Player.animations["downleft"] = SpriteAnimator.new(framesDownLeft, 0.15)
+    Player.animations["upright"] = SpriteAnimator.new(Player.sprites["Normal"]["UpRight"], 0.15)
+    Player.animations["upleft"] = SpriteAnimator.new(Player.sprites["Normal"]["UpLeft"], 0.15)
+    Player.animations["downright"] = SpriteAnimator.new(Player.sprites["Normal"]["DownRight"], 0.15)
+    Player.animations["downleft"] = SpriteAnimator.new(Player.sprites["Normal"]["DownLeft"], 0.15)
 end
 
 local function canPassThrough(targetGridX, targetGridY)
-    if Player.isGhostMode then
+    if Player.hasGhost then
         return true
     end
     return Maze.isWalkable(targetGridX, targetGridY)
@@ -165,16 +221,14 @@ function Player.draw()
         (Player.currentDir == "down" and Player.intendedDir == "left") then
         state = "downleft"
     else
-        -- if not angling into a turn, just use standard straight directions
         if Player.currentDir == "left" then
             state = "left"
         elseif Player.currentDir == "right" then
             state = "right"
-            -- if moving straight up/down with no side intent, default to side sprites
         elseif Player.currentDir == "up" then
-            state = "right"
+            state = "up"
         elseif Player.currentDir == "down" then
-            state = "right"
+            state = "down"
         end
     end
 
@@ -216,6 +270,71 @@ function Player.Spawn()
     Player.visualY = (Player.gridY - 1) * Maze.TILE_SIZE
 
     Player.hasMoved = false
+end
+
+function Player.AddSpeed()
+    Player.hasSpeed = true
+    Player.speedTimer = Player.setSpeedTimer
+    Player.moveSpeed = Player.moveSpeed_Speed
+
+    while (Player.hasSpeed == true) do
+        if (Player.speedTimer > -1) then
+            Player.RemoveSpeed()
+            break
+        end
+        Player.speedTimer = Player.speedTimer - 1
+    end
+end
+
+function Player.RemoveSpeed()
+    if not Player.hasSpeed then
+        return
+    end
+
+    Player.hasSpeed = false
+    Player.moveSpeed = Player.moveSpeed_Normal
+end
+
+function Player.AddMagnet()
+    Player.hasMagnet = true
+    Player.magnetTimer = Player.setMagnetTimer
+
+    while (Player.hasMagnet == true) do
+        if (Player.magnetTimer > -1) then
+            Player.RemoveMagnet()
+            break
+        end
+        Player.magnetTimer = Player.magnetTimer - 1
+    end
+end
+
+function Player.RemoveMagnet()
+    if not Player.hasMagnet then
+        return
+    end
+
+    Player.hasMagnet = false
+end
+
+function Player.AddGhost()
+    Player.hasGhost = true
+    Player.ghostTimer = Player.setGhostTimer
+
+    while (Player.hasGhost == true) do
+        if (Player.ghostTimer > -1) then
+            Player.RemoveGhost()
+            break
+        end
+        Player.ghostTimer = Player.ghostTimer - 1
+    end
+end
+
+function Player.RemoveGhost()
+    if not Player.hasGhost then
+        return
+    end
+
+    Player.hasGhost = false
 end
 
 return Player
