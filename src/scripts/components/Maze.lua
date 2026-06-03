@@ -1,6 +1,6 @@
 local Maze = {
-    TILE_SIZE = 16,
     TILE_DATA = {},
+    TILE_SIZE = 16,
     TILE_WIDTH = 35,
     TILE_HEIGHT = 35,
 }

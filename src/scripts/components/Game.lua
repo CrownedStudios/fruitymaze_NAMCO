@@ -3,6 +3,8 @@ local Game = {}
 -- Dependencies
 
 local Maze = require("scripts.components.Maze")
+local Collectibles = require("scripts.components.Collectibles")
+
 local Player = require("scripts.objects.Player")
 
 -- Global Functions
@@ -12,25 +14,24 @@ function Game.load()
 end
 
 function Game.update(dt)
-    -- any game-wide updates can go here
-end
+    Collectibles.update(dt)
 
-function Game.draw()
-    -- any game-wide drawing can go here
-end
+    local playerCenterX = Player.visualX + 8
+    local playerCenterY = Player.visualY + 8
 
-function Game.keypressed(key)
-    if key == "r" then
-        Game.StartGame()
+    local ateItem = Collectibles.checkCollision(playerCenterX, playerCenterY, 8)
+    if ateItem then
+        if ateItem == "blue" then
+        elseif ateItem == "red" then
+        elseif ateItem == "yellow" then
+        end
     end
 end
 
 function Game.StartGame()
     Maze.generateMaze()
-    Player.gridX = 2
-    Player.gridY = 2
-    Player.visualX = (Player.gridX - 1) * Maze.TILE_SIZE
-    Player.visualY = (Player.gridY - 1) * Maze.TILE_SIZE
+    Collectibles.generateCollectibles(9, 5)
+    Player.Spawn()
 end
 
 return Game

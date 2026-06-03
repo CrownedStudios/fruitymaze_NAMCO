@@ -30,5 +30,11 @@ function love.update(dt)
 end
 
 function love.draw()
-    Window.draw()
+    Window.draw(love.timer.getDelta())
+end
+
+function love.keypressed(key)
+    if key == "r" then
+        Game.StartGame()
+    end
 end

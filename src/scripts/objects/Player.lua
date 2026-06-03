@@ -7,12 +7,16 @@ local Player = {
     currentDir = "right",
     intendedDir = "right",
 
-    moveSpeed = 90 -- pixels per second,
+    moveSpeed = 90, -- pixels per second
+
+    isGhostMode = false,
+    hasMoved = false,
 }
 
 -- Dependencies
 
 local Maze = require("scripts.components.Maze")
+
 local SpriteAnimator = require("scripts.util.SpriteAnimator")
 
 -- Global Functions
@@ -54,76 +58,89 @@ function Player.load()
     Player.animations["downleft"] = SpriteAnimator.new(framesDownLeft, 0.15)
 end
 
+local function canPassThrough(targetGridX, targetGridY)
+    if Player.isGhostMode then
+        return true
+    end
+    return Maze.isWalkable(targetGridX, targetGridY)
+end
+
 function Player.update(dt)
     -- 1. Capture player intent instantly from input
     if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
         Player.intendedDir = "left"
+        Player.hasMoved = true
     elseif love.keyboard.isDown("right") or love.keyboard.isDown("d") then
         Player.intendedDir = "right"
+        Player.hasMoved = true
     elseif love.keyboard.isDown("up") or love.keyboard.isDown("w") then
         Player.intendedDir = "up"
+        Player.hasMoved = true
     elseif love.keyboard.isDown("down") or love.keyboard.isDown("s") then
         Player.intendedDir = "down"
+        Player.hasMoved = true
     end
 
-    -- Calculate our exact destination in pixels
-    local targetX = (Player.gridX - 1) * Maze.TILE_SIZE
-    local targetY = (Player.gridY - 1) * Maze.TILE_SIZE
+    if Player.hasMoved then
+        -- Calculate our exact destination in pixels
+        local targetX = (Player.gridX - 1) * Maze.TILE_SIZE
+        local targetY = (Player.gridY - 1) * Maze.TILE_SIZE
 
-    -- 2. Check if the player is perfectly aligned with their target tile
-    if Player.visualX == targetX and Player.visualY == targetY then
-        -- Try to turn in the INTENDED direction first
-        local dx, dy = 0, 0
-        if Player.intendedDir == "left" then
-            dx = -1
-        elseif Player.intendedDir == "right" then
-            dx = 1
-        elseif Player.intendedDir == "up" then
-            dy = -1
-        elseif Player.intendedDir == "down" then
-            dy = 1
-        end
-
-        if Maze.isWalkable(Player.gridX + dx, Player.gridY + dy) then
-            Player.currentDir = Player.intendedDir
-            Player.gridX = Player.gridX + dx
-            Player.gridY = Player.gridY + dy
-        else
-            -- Otherwise, try to keep moving straight
-            dx, dy = 0, 0
-            if Player.currentDir == "left" then
+        -- 2. Check if the player is perfectly aligned with their target tile
+        if Player.visualX == targetX and Player.visualY == targetY then
+            -- Try to turn in the INTENDED direction first
+            local dx, dy = 0, 0
+            if Player.intendedDir == "left" then
                 dx = -1
-            elseif Player.currentDir == "right" then
+            elseif Player.intendedDir == "right" then
                 dx = 1
-            elseif Player.currentDir == "up" then
+            elseif Player.intendedDir == "up" then
                 dy = -1
-            elseif Player.currentDir == "down" then
+            elseif Player.intendedDir == "down" then
                 dy = 1
             end
 
-            if Maze.isWalkable(Player.gridX + dx, Player.gridY + dy) then
+            if canPassThrough(Player.gridX + dx, Player.gridY + dy) then
+                Player.currentDir = Player.intendedDir
                 Player.gridX = Player.gridX + dx
                 Player.gridY = Player.gridY + dy
+            else
+                -- Otherwise, try to keep moving straight
+                dx, dy = 0, 0
+                if Player.currentDir == "left" then
+                    dx = -1
+                elseif Player.currentDir == "right" then
+                    dx = 1
+                elseif Player.currentDir == "up" then
+                    dy = -1
+                elseif Player.currentDir == "down" then
+                    dy = 1
+                end
+
+                if canPassThrough(Player.gridX + dx, Player.gridY + dy) then
+                    Player.gridX = Player.gridX + dx
+                    Player.gridY = Player.gridY + dy
+                end
             end
         end
-    end
 
-    -- Recalculate target position after potentially updating grid coordinates
-    targetX = (Player.gridX - 1) * Maze.TILE_SIZE
-    targetY = (Player.gridY - 1) * Maze.TILE_SIZE
+        -- Recalculate target position after potentially updating grid coordinates
+        targetX = (Player.gridX - 1) * Maze.TILE_SIZE
+        targetY = (Player.gridY - 1) * Maze.TILE_SIZE
 
-    -- Move X visually
-    if Player.visualX < targetX then
-        Player.visualX = math.min(Player.visualX + Player.moveSpeed * dt, targetX)
-    elseif Player.visualX > targetX then
-        Player.visualX = math.max(Player.visualX - Player.moveSpeed * dt, targetX)
-    end
+        -- Move X visually
+        if Player.visualX < targetX then
+            Player.visualX = math.min(Player.visualX + Player.moveSpeed * dt, targetX)
+        elseif Player.visualX > targetX then
+            Player.visualX = math.max(Player.visualX - Player.moveSpeed * dt, targetX)
+        end
 
-    -- Move Y visually
-    if Player.visualY < targetY then
-        Player.visualY = math.min(Player.visualY + Player.moveSpeed * dt, targetY)
-    elseif Player.visualY > targetY then
-        Player.visualY = math.max(Player.visualY - Player.moveSpeed * dt, targetY)
+        -- Move Y visually
+        if Player.visualY < targetY then
+            Player.visualY = math.min(Player.visualY + Player.moveSpeed * dt, targetY)
+        elseif Player.visualY > targetY then
+            Player.visualY = math.max(Player.visualY - Player.moveSpeed * dt, targetY)
+        end
     end
 
     for _, animation in pairs(Player.animations) do
@@ -169,6 +186,36 @@ function Player.draw()
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(sprite, Player.visualX, Player.visualY, 0, scaleX, scaleY)
+end
+
+function Player.Spawn()
+    local startGridX, startGridY = math.floor(Maze.TILE_WIDTH / 2), math.floor(Maze.TILE_HEIGHT / 2)
+
+    local foundEmptySpot = false
+    for radius = 0, 5 do
+        for dy = -radius, radius do
+            for dx = -radius, radius do
+                local checkX = startGridX + dx
+                local checkY = startGridY + dy
+
+                if Maze.isWalkable(checkX, checkY) then
+                    startGridX, startGridY = checkX, checkY
+                    foundEmptySpot = true
+                    break
+                end
+            end
+            if foundEmptySpot then break end
+        end
+        if foundEmptySpot then break end
+    end
+
+    Player.gridX = startGridX
+    Player.gridY = startGridY
+
+    Player.visualX = (Player.gridX - 1) * Maze.TILE_SIZE
+    Player.visualY = (Player.gridY - 1) * Maze.TILE_SIZE
+
+    Player.hasMoved = false
 end
 
 return Player
