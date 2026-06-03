@@ -82,7 +82,9 @@ local Player = {
     setMagnetTimer = 35,
     setGhostTimer = 20,
 
+    hasSpawned = false,
     hasMoved = false,
+    playerLocked = false,
 }
 
 -- Dependencies
@@ -122,6 +124,10 @@ local function canPassThrough(targetGridX, targetGridY)
 end
 
 function Player.update(dt)
+    if not Player.hasSpawned then
+        return
+    end
+
     -- 1. Capture player intent instantly from input
     if love.keyboard.isDown("left") or love.keyboard.isDown("a") then
         Player.intendedDir = "left"
@@ -137,74 +143,80 @@ function Player.update(dt)
         Player.hasMoved = true
     end
 
-    if Player.hasMoved then
-        -- Calculate our exact destination in pixels
-        local targetX = (Player.gridX - 1) * Maze.TILE_SIZE
-        local targetY = (Player.gridY - 1) * Maze.TILE_SIZE
+    if not Player.playerLocked then
+        if Player.hasMoved then
+            -- Calculate our exact destination in pixels
+            local targetX = (Player.gridX - 1) * Maze.TILE_SIZE
+            local targetY = (Player.gridY - 1) * Maze.TILE_SIZE
 
-        -- 2. Check if the player is perfectly aligned with their target tile
-        if Player.visualX == targetX and Player.visualY == targetY then
-            -- Try to turn in the INTENDED direction first
-            local dx, dy = 0, 0
-            if Player.intendedDir == "left" then
-                dx = -1
-            elseif Player.intendedDir == "right" then
-                dx = 1
-            elseif Player.intendedDir == "up" then
-                dy = -1
-            elseif Player.intendedDir == "down" then
-                dy = 1
-            end
-
-            if canPassThrough(Player.gridX + dx, Player.gridY + dy) then
-                Player.currentDir = Player.intendedDir
-                Player.gridX = Player.gridX + dx
-                Player.gridY = Player.gridY + dy
-            else
-                -- Otherwise, try to keep moving straight
-                dx, dy = 0, 0
-                if Player.currentDir == "left" then
+            -- 2. Check if the player is perfectly aligned with their target tile
+            if Player.visualX == targetX and Player.visualY == targetY then
+                -- Try to turn in the INTENDED direction first
+                local dx, dy = 0, 0
+                if Player.intendedDir == "left" then
                     dx = -1
-                elseif Player.currentDir == "right" then
+                elseif Player.intendedDir == "right" then
                     dx = 1
-                elseif Player.currentDir == "up" then
+                elseif Player.intendedDir == "up" then
                     dy = -1
-                elseif Player.currentDir == "down" then
+                elseif Player.intendedDir == "down" then
                     dy = 1
                 end
 
                 if canPassThrough(Player.gridX + dx, Player.gridY + dy) then
+                    Player.currentDir = Player.intendedDir
                     Player.gridX = Player.gridX + dx
                     Player.gridY = Player.gridY + dy
+                else
+                    -- Otherwise, try to keep moving straight
+                    dx, dy = 0, 0
+                    if Player.currentDir == "left" then
+                        dx = -1
+                    elseif Player.currentDir == "right" then
+                        dx = 1
+                    elseif Player.currentDir == "up" then
+                        dy = -1
+                    elseif Player.currentDir == "down" then
+                        dy = 1
+                    end
+
+                    if canPassThrough(Player.gridX + dx, Player.gridY + dy) then
+                        Player.gridX = Player.gridX + dx
+                        Player.gridY = Player.gridY + dy
+                    end
                 end
+            end
+
+            -- Recalculate target position after potentially updating grid coordinates
+            targetX = (Player.gridX - 1) * Maze.TILE_SIZE
+            targetY = (Player.gridY - 1) * Maze.TILE_SIZE
+
+            -- Move X visually
+            if Player.visualX < targetX then
+                Player.visualX = math.min(Player.visualX + Player.moveSpeed * dt, targetX)
+            elseif Player.visualX > targetX then
+                Player.visualX = math.max(Player.visualX - Player.moveSpeed * dt, targetX)
+            end
+
+            -- Move Y visually
+            if Player.visualY < targetY then
+                Player.visualY = math.min(Player.visualY + Player.moveSpeed * dt, targetY)
+            elseif Player.visualY > targetY then
+                Player.visualY = math.max(Player.visualY - Player.moveSpeed * dt, targetY)
             end
         end
 
-        -- Recalculate target position after potentially updating grid coordinates
-        targetX = (Player.gridX - 1) * Maze.TILE_SIZE
-        targetY = (Player.gridY - 1) * Maze.TILE_SIZE
-
-        -- Move X visually
-        if Player.visualX < targetX then
-            Player.visualX = math.min(Player.visualX + Player.moveSpeed * dt, targetX)
-        elseif Player.visualX > targetX then
-            Player.visualX = math.max(Player.visualX - Player.moveSpeed * dt, targetX)
+        for _, animation in pairs(Player.animations) do
+            animation:update(dt)
         end
-
-        -- Move Y visually
-        if Player.visualY < targetY then
-            Player.visualY = math.min(Player.visualY + Player.moveSpeed * dt, targetY)
-        elseif Player.visualY > targetY then
-            Player.visualY = math.max(Player.visualY - Player.moveSpeed * dt, targetY)
-        end
-    end
-
-    for _, animation in pairs(Player.animations) do
-        animation:update(dt)
     end
 end
 
 function Player.draw()
+    if not Player.hasSpawned then
+        return
+    end
+
     local state = "right"
 
     -- check combinations for diagonal facing states
@@ -269,7 +281,16 @@ function Player.Spawn()
     Player.visualX = (Player.gridX - 1) * Maze.TILE_SIZE
     Player.visualY = (Player.gridY - 1) * Maze.TILE_SIZE
 
+    Player.hasSpawned = true
     Player.hasMoved = false
+end
+
+function Player.Lock()
+    Player.playerLocked = true
+end
+
+function Player.Unlock()
+    Player.playerLocked = false
 end
 
 function Player.AddSpeed()

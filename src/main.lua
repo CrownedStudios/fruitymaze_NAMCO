@@ -13,7 +13,6 @@ function love.load()
     -- initialize modules
     Window.load()
     Game.load()
-    Maze.load()
     Player.load()
 
     -- initialize game state
@@ -26,7 +25,6 @@ end
 
 function love.update(dt)
     Game.update(dt)
-    Player.update(dt)
 end
 
 function love.draw()
@@ -35,6 +33,6 @@ end
 
 function love.keypressed(key)
     if key == "r" then
-        Game.StartGame()
+        Game.StartGame(true)
     end
 end

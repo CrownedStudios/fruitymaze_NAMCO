@@ -5,6 +5,7 @@ local Window = {
 -- Dependencies
 
 local Camera = require("scripts.objects.Camera")
+local Game = require("scripts.components.Game")
 
 local Maze = require("scripts.components.Maze")
 local Collectibles = require("scripts.components.Collectibles")
@@ -76,6 +77,16 @@ function Window.draw(dt)
     Collectibles.draw()
     Player.draw()
     Camera.detach()
+
+    -- --- INTERMISSION TEXT OVERLAY ---
+    local currentText = Game.getIntermissionText()
+    if currentText and currentText ~= "" then
+        -- Set text color to flashing yellow/red or solid arcade yellow
+        love.graphics.setColor(1, 1, 0)
+
+        -- Center the text horizontally across your VIEWPORT_WIDTH right in the middle
+        love.graphics.printf(currentText, 0, (VIEWPORT_HEIGHT / 2) + 16, VIEWPORT_WIDTH, "center")
+    end
 
     love.graphics.setScissor() -- Clear the clip box cleanly
     love.graphics.pop()

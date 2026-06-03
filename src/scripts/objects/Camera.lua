@@ -3,9 +3,9 @@ local Camera = {
     y = 0,
     viewportWidth = 432,
     viewportHeight = 304,
-    zoom = 2,
+    zoom = 3,
 
-    lerpSpeed = 4.5,
+    lerpSpeed = 10,
 }
 
 -- Global Functions
