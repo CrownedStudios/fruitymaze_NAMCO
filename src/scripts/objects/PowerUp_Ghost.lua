@@ -9,19 +9,17 @@ PowerUp_Ghost.__index = PowerUp_Ghost
 
 local Maze = require("scripts.components.Maze")
 
-local Player = require("scripts.objects.player")
+local Player = require("scripts.objects.Player")
 
 -- Global Functions
 
-function PowerUp_Ghost.new(gridX, gridY, tileSize)
+function PowerUp_Ghost.new(worldX, worldY, tileSize)
     local self = setmetatable({}, PowerUp_Ghost)
     self.type = "magnet"
 
-    self.gridX = gridX
-    self.gridY = gridY
-
-    self.x = (gridX - 1) * tileSize + (tileSize / 2)
-    self.y = (gridY - 1) * tileSize + (tileSize / 2)
+    self.x = worldX
+    self.y = worldY
+    self.tileSize = tileSize
 
     self.sprite = PowerUp_Ghost.sprites["Static"]
 
@@ -34,8 +32,11 @@ function PowerUp_Ghost:draw()
     local scaleX = Maze.TILE_SIZE / sprite:getWidth()
     local scaleY = Maze.TILE_SIZE / sprite:getHeight()
 
+    local ox = sprite:getWidth() / 2
+    local oy = sprite:getHeight() / 2
+
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(sprite, self.x, self.y, 0, scaleX, scaleY)
+    love.graphics.draw(sprite, self.x, self.y, 0, scaleX, scaleY, ox, oy)
 end
 
 function PowerUp_Ghost:collected()

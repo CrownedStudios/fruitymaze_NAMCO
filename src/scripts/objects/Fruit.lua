@@ -44,16 +44,14 @@ end
 
 -- Global Functions
 
-function Fruit.new(gridX, gridY, tileSize)
+function Fruit.new(worldX, worldY, tileSize)
     local self = setmetatable({}, Fruit)
     self.type = "fruit"
     self.fruitType = chooseRandomFruit()
 
-    self.gridX = gridX
-    self.gridY = gridY
-
-    self.x = (gridX - 1) * tileSize + (tileSize / 2)
-    self.y = (gridY - 1) * tileSize + (tileSize / 2)
+    self.x = worldX
+    self.y = worldY
+    self.tileSize = tileSize
 
     self.isGlitched = false
 
@@ -76,8 +74,11 @@ function Fruit:draw()
     local scaleX = Maze.TILE_SIZE / sprite:getWidth()
     local scaleY = Maze.TILE_SIZE / sprite:getHeight()
 
+    local ox = sprite:getWidth() / 2
+    local oy = sprite:getHeight() / 2
+
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(sprite, self.x, self.y, 0, scaleX, scaleY)
+    love.graphics.draw(sprite, self.x, self.y, 0, scaleX, scaleY, ox, oy)
 end
 
 function Fruit:collected()

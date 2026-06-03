@@ -1,5 +1,5 @@
 local Collectibles = {
-    items = {},
+    ITEMS = {},
     TILE_SIZE = 16
 }
 
@@ -7,8 +7,9 @@ local Collectibles = {
 
 local Maze = require("scripts.components.Maze")
 
-local Fruit = require("scripts.objects.Fruit")
+local Player = require("scripts.objects.Player")
 
+local Fruit = require("scripts.objects.Fruit")
 local PowerUp_Magnet = require("scripts.objects.PowerUp_Magnet")
 local PowerUp_Ghost = require("scripts.objects.PowerUp_Ghost")
 local PowerUp_Speed = require("scripts.objects.PowerUp_Speed")
@@ -16,7 +17,7 @@ local PowerUp_Speed = require("scripts.objects.PowerUp_Speed")
 -- Global Functions
 
 function Collectibles.generateCollectibles(yellowCount, redCount)
-    Collectibles.items = {}
+    Collectibles.ITEMS = {}
 
     local openTiles = {}
     local deadEnds = {}
@@ -46,43 +47,61 @@ function Collectibles.generateCollectibles(yellowCount, redCount)
         deadEnds[i], deadEnds[j] = deadEnds[j], deadEnds[i]
     end
 
+    local function getCenterPos(gridX, gridY)
+        local worldX = (gridX - 1) * Collectibles.TILE_SIZE + (Collectibles.TILE_SIZE / 2)
+        local worldY = (gridY - 1) * Collectibles.TILE_SIZE + (Collectibles.TILE_SIZE / 2)
+
+        return worldX, worldY
+    end
+
     local deadEndIndex = 1
 
     for i = 1, redCount do
         if deadEndIndex <= #deadEnds then
             local tile = deadEnds[deadEndIndex]
+            local wx, wy = getCenterPos(tile.x, tile.y)
 
             local isMagnet = math.random() > 0.4
-            table.insert(Collectibles.items,
-                isMagnet and PowerUp_Magnet.new(tile.x, tile.y, Collectibles.TILE_SIZE) or
-                PowerUp_Ghost.new(tile.x, tile.y, Collectibles.TILE_SIZE))
+            table.insert(Collectibles.ITEMS,
+                isMagnet and PowerUp_Magnet.new(wx, wy, Collectibles.TILE_SIZE) or
+                PowerUp_Ghost.new(wx, wy, Collectibles.TILE_SIZE))
             deadEndIndex = deadEndIndex + 1
         end
     end
-
     for i = 1, yellowCount do
         if deadEndIndex <= #deadEnds then
             local tile = deadEnds[deadEndIndex]
-            table.insert(Collectibles.items, PowerUp_Speed.new(tile.x, tile.y, Collectibles.TILE_SIZE))
+            local wx, wy = getCenterPos(tile.x, tile.y)
+            table.insert(Collectibles.ITEMS, PowerUp_Speed.new(wx, wy, Collectibles.TILE_SIZE))
             deadEndIndex = deadEndIndex + 1
         end
     end
-
     for i = deadEndIndex, #deadEnds do
         local tile = deadEnds[i]
-        table.insert(Collectibles.items, Fruit.new(tile.x, tile.y, Collectibles.TILE_SIZE))
+        local wx, wy = getCenterPos(tile.x, tile.y)
+        table.insert(Collectibles.ITEMS, Fruit.new(wx, wy, Collectibles.TILE_SIZE))
     end
 
+    local fruitSpacing = 1
+    local stepCounter = 0
     for _, tile in ipairs(openTiles) do
-        table.insert(Collectibles.items, Fruit.new(tile.x, tile.y, Collectibles.TILE_SIZE))
+        if stepCounter == 0 then
+            local wx, wy = getCenterPos(tile.x, tile.y)
+            table.insert(Collectibles.ITEMS, Fruit.new(wx, wy, Collectibles.TILE_SIZE))
+        end
+
+        stepCounter = (stepCounter + 1) % fruitSpacing
     end
 end
 
 function Collectibles.checkCollision(playerX, playerY, pickupRadius)
     local radius = pickupRadius or 8
 
-    for i = #Collectibles.items, 1, -1 do
-        local item = Collectibles.items[i]
+    local playerCenterX = playerX + (Maze.TILE_SIZE / 2)
+    local playerCenterY = playerY + (Maze.TILE_SIZE / 2)
+
+    for i = #Collectibles.ITEMS, 1, -1 do
+        local item = Collectibles.ITEMS[i]
         local dx = playerX - item.x
         local dy = playerY - item.y
 
@@ -90,7 +109,7 @@ function Collectibles.checkCollision(playerX, playerY, pickupRadius)
             if item.collected then
                 item:collected()
             end
-            table.remove(Collectibles.items, i)
+            table.remove(Collectibles.ITEMS, i)
         end
     end
 
@@ -98,7 +117,24 @@ function Collectibles.checkCollision(playerX, playerY, pickupRadius)
 end
 
 function Collectibles.update(dt)
-    for _, item in ipairs(Collectibles.items) do
+    local playerCenterX = Player.visualX + (Maze.TILE_SIZE / 2)
+    local playerCenterY = Player.visualY + (Maze.TILE_SIZE / 2)
+
+    local magnetRange = 80 -- in pixels
+    local pullSpeed = 100
+
+    for _, item in ipairs(Collectibles.ITEMS) do
+        if Player.hasMagnet and item.type == "fruit" then
+            local dx = playerCenterX - item.x
+            local dy = playerCenterY - item.y
+            local distance = math.sqrt(dx * dx + dy * dy)
+
+            if distance < magnetRange and distance > 0 then
+                item.x = item.x + (dx / distance) * pullSpeed * dt
+                item.y = item.y + (dy / distance) * pullSpeed * dt
+            end
+        end
+
         if item.update then
             item:update(dt)
         end
@@ -106,7 +142,7 @@ function Collectibles.update(dt)
 end
 
 function Collectibles.draw()
-    for _, item in ipairs(Collectibles.items) do
+    for _, item in ipairs(Collectibles.ITEMS) do
         item:draw()
     end
     love.graphics.setColor(1, 1, 1)

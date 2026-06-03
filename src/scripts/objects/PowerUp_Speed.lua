@@ -16,21 +16,19 @@ PowerUp_Speed.__index = PowerUp_Speed
 
 local Maze = require("scripts.components.Maze")
 
-local Player = require("scripts.objects.player")
+local Player = require("scripts.objects.Player")
 
 local SpriteAnimator = require("scripts.util.SpriteAnimator")
 
 -- Global Functions
 
-function PowerUp_Speed.new(gridX, gridY, tileSize)
+function PowerUp_Speed.new(worldX, worldY, tileSize)
     local self = setmetatable({}, PowerUp_Speed)
     self.type = "magnet"
 
-    self.gridX = gridX
-    self.gridY = gridY
-
-    self.x = (gridX - 1) * tileSize + (tileSize / 2)
-    self.y = (gridY - 1) * tileSize + (tileSize / 2)
+    self.x = worldX
+    self.y = worldY
+    self.tileSize = tileSize
 
     self.isGlitched = false
 
@@ -53,8 +51,11 @@ function PowerUp_Speed:draw()
     local scaleX = Maze.TILE_SIZE / sprite:getWidth()
     local scaleY = Maze.TILE_SIZE / sprite:getHeight()
 
+    local ox = sprite:getWidth() / 2
+    local oy = sprite:getHeight() / 2
+
     love.graphics.setColor(1, 1, 1)
-    love.graphics.draw(sprite, self.x, self.y, 0, scaleX, scaleY)
+    love.graphics.draw(sprite, self.x, self.y, 0, scaleX, scaleY, ox, oy)
 end
 
 function PowerUp_Speed:collected()

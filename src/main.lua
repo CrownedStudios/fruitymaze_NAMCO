@@ -1,8 +1,8 @@
 -- Dependencies
 
 local Window = require("scripts.util.Window")
+
 local Game = require("scripts.components.Game")
-local Maze = require("scripts.components.Maze")
 local Player = require("scripts.objects.Player")
 
 -- Global Functions

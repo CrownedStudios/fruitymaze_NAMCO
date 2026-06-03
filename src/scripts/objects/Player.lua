@@ -72,15 +72,15 @@ local Player = {
     intendedDir = "right",
 
     moveSpeed_Normal = 90, -- pixels per second
-    moveSpeed_Speed = 280, -- pixels per second
+    moveSpeed_Speed = 160, -- pixels per second
 
     hasSpeed = false,
     hasMagnet = false,
     hasGhost = false,
 
-    setSpeedTimer = 30,
-    setMagnetTimer = 35,
-    setGhostTimer = 20,
+    setSpeedTimer = 15,
+    setMagnetTimer = 15,
+    setGhostTimer = 10,
 
     hasSpawned = false,
     hasMoved = false,
@@ -126,6 +126,25 @@ end
 function Player.update(dt)
     if not Player.hasSpawned then
         return
+    end
+
+    if Player.hasSpeed then
+        Player.speedTimer = Player.speedTimer - dt
+        if Player.speedTimer <= 0 then
+            Player.RemoveSpeed()
+        end
+    end
+    if Player.hasMagnet then
+        Player.magnetTimer = Player.magnetTimer - dt
+        if Player.magnetTimer <= 0 then
+            Player.RemoveMagnet()
+        end
+    end
+    if Player.hasGhost then
+        Player.ghostTimer = Player.ghostTimer - dt
+        if Player.ghostTimer <= 0 then
+            Player.RemoveGhost()
+        end
     end
 
     -- 1. Capture player intent instantly from input
@@ -250,8 +269,14 @@ function Player.draw()
     local scaleX = Maze.TILE_SIZE / sprite:getWidth()
     local scaleY = Maze.TILE_SIZE / sprite:getHeight()
 
-    love.graphics.setColor(1, 1, 1)
+    if Player.hasGhost then
+        love.graphics.setColor(1, 1, 1, 0.85)
+    else
+        love.graphics.setColor(1, 1, 1, 1)
+    end
+
     love.graphics.draw(sprite, Player.visualX, Player.visualY, 0, scaleX, scaleY)
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Player.Spawn()
@@ -297,21 +322,9 @@ function Player.AddSpeed()
     Player.hasSpeed = true
     Player.speedTimer = Player.setSpeedTimer
     Player.moveSpeed = Player.moveSpeed_Speed
-
-    while (Player.hasSpeed == true) do
-        if (Player.speedTimer > -1) then
-            Player.RemoveSpeed()
-            break
-        end
-        Player.speedTimer = Player.speedTimer - 1
-    end
 end
 
 function Player.RemoveSpeed()
-    if not Player.hasSpeed then
-        return
-    end
-
     Player.hasSpeed = false
     Player.moveSpeed = Player.moveSpeed_Normal
 end
@@ -319,42 +332,18 @@ end
 function Player.AddMagnet()
     Player.hasMagnet = true
     Player.magnetTimer = Player.setMagnetTimer
-
-    while (Player.hasMagnet == true) do
-        if (Player.magnetTimer > -1) then
-            Player.RemoveMagnet()
-            break
-        end
-        Player.magnetTimer = Player.magnetTimer - 1
-    end
 end
 
 function Player.RemoveMagnet()
-    if not Player.hasMagnet then
-        return
-    end
-
     Player.hasMagnet = false
 end
 
 function Player.AddGhost()
     Player.hasGhost = true
     Player.ghostTimer = Player.setGhostTimer
-
-    while (Player.hasGhost == true) do
-        if (Player.ghostTimer > -1) then
-            Player.RemoveGhost()
-            break
-        end
-        Player.ghostTimer = Player.ghostTimer - 1
-    end
 end
 
 function Player.RemoveGhost()
-    if not Player.hasGhost then
-        return
-    end
-
     Player.hasGhost = false
 end
 

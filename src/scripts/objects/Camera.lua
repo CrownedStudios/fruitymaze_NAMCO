@@ -3,7 +3,7 @@ local Camera = {
     y = 0,
     viewportWidth = 432,
     viewportHeight = 304,
-    zoom = 3,
+    zoom = 2,
 
     lerpSpeed = 10,
 }
