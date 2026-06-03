@@ -18,14 +18,7 @@ function Game.update(dt)
 
     local playerCenterX = Player.visualX + 8
     local playerCenterY = Player.visualY + 8
-
-    local ateItem = Collectibles.checkCollision(playerCenterX, playerCenterY, 8)
-    if ateItem then
-        if ateItem == "blue" then
-        elseif ateItem == "red" then
-        elseif ateItem == "yellow" then
-        end
-    end
+    Collectibles.checkCollision(playerCenterX, playerCenterY, 8)
 end
 
 function Game.StartGame()

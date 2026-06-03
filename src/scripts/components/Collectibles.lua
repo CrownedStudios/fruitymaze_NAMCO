@@ -9,6 +9,10 @@ local Maze = require("scripts.components.Maze")
 
 local Fruit = require("scripts.objects.Fruit")
 
+local PowerUp_Magnet = require("scripts.objects.PowerUp_Magnet")
+local PowerUp_Ghost = require("scripts.objects.PowerUp_Ghost")
+local PowerUp_Speed = require("scripts.objects.PowerUp_Speed")
+
 -- Global Functions
 
 function Collectibles.generateCollectibles(yellowCount, redCount)
@@ -47,7 +51,11 @@ function Collectibles.generateCollectibles(yellowCount, redCount)
     for i = 1, redCount do
         if deadEndIndex <= #deadEnds then
             local tile = deadEnds[deadEndIndex]
-            -- table.insert(Collectibles.items, RedPowerUp.new(tile.x, tile.y, Collectibles.TILE_SIZE))
+
+            local isMagnet = math.random() > 0.4
+            table.insert(Collectibles.items,
+                isMagnet and PowerUp_Magnet.new(tile.x, tile.y, Collectibles.TILE_SIZE) or
+                PowerUp_Ghost.new(tile.x, tile.y, Collectibles.TILE_SIZE))
             deadEndIndex = deadEndIndex + 1
         end
     end
@@ -55,7 +63,7 @@ function Collectibles.generateCollectibles(yellowCount, redCount)
     for i = 1, yellowCount do
         if deadEndIndex <= #deadEnds then
             local tile = deadEnds[deadEndIndex]
-            -- table.insert(Collectibles.items, YellowPowerUp.new(tile.x, tile.y, Collectibles.TILE_SIZE))
+            table.insert(Collectibles.items, PowerUp_Speed.new(tile.x, tile.y, Collectibles.TILE_SIZE))
             deadEndIndex = deadEndIndex + 1
         end
     end
@@ -79,9 +87,10 @@ function Collectibles.checkCollision(playerX, playerY, pickupRadius)
         local dy = playerY - item.y
 
         if math.sqrt(dx * dx + dy * dy) < radius then
-            local collectedType = item.type
+            if item.collected then
+                item:collected()
+            end
             table.remove(Collectibles.items, i)
-            return collectedType
         end
     end
 
@@ -90,7 +99,9 @@ end
 
 function Collectibles.update(dt)
     for _, item in ipairs(Collectibles.items) do
-        item:update(dt)
+        if item.update then
+            item:update(dt)
+        end
     end
 end
 

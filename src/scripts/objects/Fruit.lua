@@ -36,11 +36,13 @@ local Maze = require("scripts.components.Maze")
 
 local SpriteAnimator = require("scripts.util.SpriteAnimator")
 
--- Global Functions
+-- Local Functions
 
 local function chooseRandomFruit()
     return Fruit.fruitTypes[math.random(#Fruit.fruitTypes)]
 end
+
+-- Global Functions
 
 function Fruit.new(gridX, gridY, tileSize)
     local self = setmetatable({}, Fruit)
@@ -53,7 +55,7 @@ function Fruit.new(gridX, gridY, tileSize)
     self.x = (gridX - 1) * tileSize + (tileSize / 2)
     self.y = (gridY - 1) * tileSize + (tileSize / 2)
 
-    self.isGlitched = true
+    self.isGlitched = false
 
     self.sprite = Fruit.fruitSprites[self.fruitType]["Static"]
     self.spriteAnimator = SpriteAnimator.new(Fruit.fruitSprites[self.fruitType]["Glitch"], math.random(0.2, 0.6))
@@ -76,6 +78,10 @@ function Fruit:draw()
 
     love.graphics.setColor(1, 1, 1)
     love.graphics.draw(sprite, self.x, self.y, 0, scaleX, scaleY)
+end
+
+function Fruit:collected()
+    print("Fruit collected!")
 end
 
 return Fruit
