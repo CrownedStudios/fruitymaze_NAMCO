@@ -143,7 +143,11 @@ function Player.update(dt)
     if Player.hasGhost then
         Player.ghostTimer = Player.ghostTimer - dt
         if Player.ghostTimer <= 0 then
-            Player.RemoveGhost()
+            if Maze.isWalkable(Player.gridX, Player.gridY) then
+                Player.RemoveGhost()
+            else
+                Player.ghostTimer = 0
+            end
         end
     end
 

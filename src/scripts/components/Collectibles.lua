@@ -120,18 +120,68 @@ function Collectibles.update(dt)
     local playerCenterX = Player.visualX + (Maze.TILE_SIZE / 2)
     local playerCenterY = Player.visualY + (Maze.TILE_SIZE / 2)
 
-    local magnetRange = 80 -- in pixels
-    local pullSpeed = 100
+    local magnetRange = 100
+    local pullSpeed = 150
+    local returnSpeed = 120
 
     for _, item in ipairs(Collectibles.ITEMS) do
-        if Player.hasMagnet and item.type == "fruit" then
+        if item.type == "fruit" then
             local dx = playerCenterX - item.x
             local dy = playerCenterY - item.y
             local distance = math.sqrt(dx * dx + dy * dy)
 
-            if distance < magnetRange and distance > 0 then
+            -- State A: Under magnet attraction influence
+            if Player.hasMagnet and distance < magnetRange and distance > 0 then
                 item.x = item.x + (dx / distance) * pullSpeed * dt
                 item.y = item.y + (dy / distance) * pullSpeed * dt
+
+                -- Flag this item as currently "displaced" by a magnet
+                item.wasPulled = true
+
+                -- State B: Magnet just shut off, recalculate a safe local home where it dropped!
+            elseif item.wasPulled then
+                item.wasPulled = false -- Reset flag so this only triggers once
+
+                -- Convert its current loose pixel spot to a 1-based grid position
+                local gx = math.floor(item.x / Maze.TILE_SIZE) + 1
+                local gy = math.floor(item.y / Maze.TILE_SIZE) + 1
+
+                -- If it's in an open pathway, anchor it right here!
+                if Maze.isWalkable(gx, gy) then
+                    item.homeX = (gx - 1) * Maze.TILE_SIZE + (Maze.TILE_SIZE / 2)
+                    item.homeY = (gy - 1) * Maze.TILE_SIZE + (Maze.TILE_SIZE / 2)
+                else
+                    -- If it stopped mid-wall, find the absolute closest open tile to settle in
+                    local minDistance = 999999
+                    for dy = -1, 1 do
+                        for dx = -1, 1 do
+                            if Maze.isWalkable(gx + dx, gy + dy) then
+                                local wx = (gx + dx - 1) * Maze.TILE_SIZE + (Maze.TILE_SIZE / 2)
+                                local wy = (gy + dy - 1) * Maze.TILE_SIZE + (Maze.TILE_SIZE / 2)
+                                local dist = math.sqrt((item.x - wx) ^ 2 + (item.y - wy) ^ 2)
+                                if dist < minDistance then
+                                    minDistance = dist
+                                    item.homeX = wx
+                                    item.homeY = wy
+                                end
+                            end
+                        end
+                    end
+                end
+
+                -- State C: Smoothly settle into whatever its active home anchor is
+            elseif item.homeX and item.homeY then
+                local hdx = item.homeX - item.x
+                local hdy = item.homeY - item.y
+                local homeDist = math.sqrt(hdx * hdx + hdy * hdy)
+
+                if homeDist > 0.5 then
+                    item.x = item.x + (hdx / homeDist) * returnSpeed * dt
+                    item.y = item.y + (hdy / homeDist) * returnSpeed * dt
+                else
+                    item.x = item.homeX
+                    item.y = item.homeY
+                end
             end
         end
 

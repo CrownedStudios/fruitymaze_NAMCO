@@ -6,6 +6,8 @@ local Game = {
 
 -- Dependencies
 
+local DiscordRPC = require("scripts.util.DiscordRPC")
+
 local Maze = require("scripts.components.Maze")
 local Collectibles = require("scripts.components.Collectibles")
 
@@ -32,7 +34,9 @@ function Game.update(dt)
         end
     elseif Game.state == "INTERMISSION_SPAWN" then
         if Game.stateTimer <= 0 then
+            DiscordRPC.updateStatus("Playing", "Arcade Mode", 1, 1, true)
             Player.Unlock()
+
             Game.state = "PLAYING"
             Game.showText = ""
         end
@@ -54,6 +58,7 @@ function Game.StartGame(short)
     Maze.generateMaze()
     Collectibles.generateCollectibles(10, 7)
 
+    DiscordRPC.updateStatus("Intermission", "Arcade Mode", nil, nil, true)
     if short == true then
         Player.Lock()
         Player.Spawn()
